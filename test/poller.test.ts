@@ -36,12 +36,25 @@ test("폴링을 반복해도 상태 전환마다 한 번만 알린다", async ()
   };
 
   try {
-    assert.equal((await pollOnce(config, client, [notifier])).notifications, 0);
-    assert.equal((await pollOnce(config, client, [notifier])).notifications, 0);
+    const resolveNotifiers = () => [notifier];
+    assert.equal(
+      (await pollOnce(config, client, resolveNotifiers)).notifications,
+      0,
+    );
+    assert.equal(
+      (await pollOnce(config, client, resolveNotifiers)).notifications,
+      0,
+    );
 
     state = "RELEASE_LIFECYCLE_STATE_APPROVED_NOT_PUBLISHED";
-    assert.equal((await pollOnce(config, client, [notifier])).notifications, 1);
-    assert.equal((await pollOnce(config, client, [notifier])).notifications, 0);
+    assert.equal(
+      (await pollOnce(config, client, resolveNotifiers)).notifications,
+      1,
+    );
+    assert.equal(
+      (await pollOnce(config, client, resolveNotifiers)).notifications,
+      0,
+    );
 
     assert.equal(events.length, 1);
     assert.equal(events[0]?.kind, "approved");

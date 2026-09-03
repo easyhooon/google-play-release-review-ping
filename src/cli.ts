@@ -4,7 +4,7 @@ import {
   type LifecycleState,
 } from "./domain/lifecycle.js";
 import { GooglePlayClient } from "./google-play.js";
-import { createNotifiers } from "./notifier.js";
+import { createNotifierResolver } from "./notifier.js";
 import { nextPollDelaySeconds } from "./polling-delay.js";
 import { pollOnce } from "./poller.js";
 
@@ -22,12 +22,12 @@ if (command === "demo") {
 async function run(mode: "once" | "watch"): Promise<void> {
   const config = await loadConfig(configPath);
   const client = new GooglePlayClient();
-  const notifiers = createNotifiers();
+  const resolveNotifiers = createNotifierResolver(config.apps);
 
   const tick = async (): Promise<boolean> => {
     const startedAt = new Date().toISOString();
     try {
-      const summary = await pollOnce(config, client, notifiers);
+      const summary = await pollOnce(config, client, resolveNotifiers);
       console.log(
         `${startedAt} checked=${summary.checked} notifications=${summary.notifications}`,
       );

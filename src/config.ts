@@ -3,6 +3,9 @@ import { readFile } from "node:fs/promises";
 export interface AppConfig {
   packageName: string;
   tracks: string[];
+  slackWebhookEnv?: string;
+  discordWebhookEnv?: string;
+  teamsWebhookEnv?: string;
 }
 
 export interface Config {
@@ -62,5 +65,25 @@ function parseApp(value: unknown, index: number): AppConfig {
   return {
     packageName: app.packageName,
     tracks: [...new Set(app.tracks as string[])],
+    ...optionalEnvironmentName(app, "slackWebhookEnv", index),
+    ...optionalEnvironmentName(app, "discordWebhookEnv", index),
+    ...optionalEnvironmentName(app, "teamsWebhookEnv", index),
   };
+}
+
+function optionalEnvironmentName(
+  app: Record<string, unknown>,
+  key: "slackWebhookEnv" | "discordWebhookEnv" | "teamsWebhookEnv",
+  index: number,
+): Partial<AppConfig> {
+  const value = app[key];
+  if (value === undefined) return {};
+
+  if (
+    typeof value !== "string" ||
+    !/^[A-Za-z_][A-Za-z0-9_]*$/.test(value)
+  ) {
+    throw new Error(`apps[${index}].${key}가 올바른 환경 변수 이름이 아닙니다.`);
+  }
+  return { [key]: value };
 }

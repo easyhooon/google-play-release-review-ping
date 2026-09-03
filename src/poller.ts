@@ -1,7 +1,11 @@
 import type { Config } from "./config.js";
 import { observeLifecycle } from "./domain/lifecycle.js";
 import type { GooglePlayClient, ReleaseObservation } from "./google-play.js";
-import { notifyAll, type Notifier } from "./notifier.js";
+import {
+  notifyAll,
+  type Notifier,
+  type NotifierResolver,
+} from "./notifier.js";
 import { FileStateStore } from "./state-store.js";
 
 export interface PollSummary {
@@ -12,7 +16,7 @@ export interface PollSummary {
 export async function pollOnce(
   config: Config,
   client: Pick<GooglePlayClient, "listReleases">,
-  notifiers: Notifier[],
+  resolveNotifiers: NotifierResolver,
 ): Promise<PollSummary> {
   const store = new FileStateStore(config.stateFile);
   await store.load();
@@ -27,7 +31,11 @@ export async function pollOnce(
 
   let notifications = 0;
   for (const observation of observations) {
-    notifications += await processObservation(store, observation, notifiers);
+    notifications += await processObservation(
+      store,
+      observation,
+      resolveNotifiers(observation.packageName),
+    );
   }
 
   await store.save();
