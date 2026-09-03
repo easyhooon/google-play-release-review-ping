@@ -5,6 +5,7 @@ import {
 } from "./domain/lifecycle.js";
 import { GooglePlayClient } from "./google-play.js";
 import { createNotifiers } from "./notifier.js";
+import { nextPollDelaySeconds } from "./polling-delay.js";
 import { pollOnce } from "./poller.js";
 
 const command = process.argv[2] ?? "once";
@@ -23,24 +24,44 @@ async function run(mode: "once" | "watch"): Promise<void> {
   const client = new GooglePlayClient();
   const notifiers = createNotifiers();
 
-  const tick = async (): Promise<void> => {
+  const tick = async (): Promise<boolean> => {
     const startedAt = new Date().toISOString();
     try {
       const summary = await pollOnce(config, client, notifiers);
       console.log(
         `${startedAt} checked=${summary.checked} notifications=${summary.notifications}`,
       );
+      return true;
     } catch (error) {
       console.error(`${startedAt} poll failed`, error);
       if (mode === "once") process.exitCode = 1;
+      return false;
     }
   };
 
-  await tick();
-  if (mode === "watch") {
-    console.log(`${config.pollIntervalSeconds}초 간격으로 감시합니다.`);
-    setInterval(() => void tick(), config.pollIntervalSeconds * 1_000);
+  if (mode === "once") {
+    await tick();
+    return;
   }
+
+  console.log(`${config.pollIntervalSeconds}초 간격으로 감시합니다.`);
+  let consecutiveFailures = 0;
+
+  const scheduleNext = async (): Promise<void> => {
+    const succeeded = await tick();
+    consecutiveFailures = succeeded ? 0 : consecutiveFailures + 1;
+    const delaySeconds = nextPollDelaySeconds(
+      config.pollIntervalSeconds,
+      consecutiveFailures,
+    );
+
+    if (!succeeded) {
+      console.error(`${delaySeconds}초 후 다시 시도합니다.`);
+    }
+    setTimeout(() => void scheduleNext(), delaySeconds * 1_000);
+  };
+
+  await scheduleNext();
 }
 
 function runDemo(): void {

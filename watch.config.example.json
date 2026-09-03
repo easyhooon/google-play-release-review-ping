@@ -1,5 +1,5 @@
 {
-  "pollIntervalSeconds": 180,
+  "pollIntervalSeconds": 900,
   "stateFile": ".data/state.json",
   "apps": [
     {

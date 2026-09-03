@@ -25,7 +25,7 @@ export async function loadConfig(path: string): Promise<Config> {
   }
 
   const apps = raw.apps.map((value, index) => parseApp(value, index));
-  const pollIntervalSeconds = raw.pollIntervalSeconds ?? 180;
+  const pollIntervalSeconds = raw.pollIntervalSeconds ?? 900;
   const stateFile = raw.stateFile ?? ".data/state.json";
 
   if (
