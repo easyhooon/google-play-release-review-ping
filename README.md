@@ -53,7 +53,7 @@ cp .env.example .env
 
 ```json
 {
-  "pollIntervalSeconds": 180,
+  "pollIntervalSeconds": 900,
   "stateFile": ".data/state.json",
   "apps": [
     {
@@ -63,6 +63,8 @@ cp .env.example .env
   ]
 }
 ```
+
+기본 주기는 900초입니다. 앱 한 개의 트랙 두 개를 감시하면 하루에 192회 요청합니다.
 
 ## Google Play API 준비
 
@@ -99,13 +101,19 @@ pnpm once
 pnpm watch
 ```
 
+기본 900초 설정에서는 조회에 실패할 때 재시도 간격을 1,800초, 최대 3,600초까지 늘립니다. 정상 조회 후에는 설정한 주기로 돌아갑니다.
+
 다른 설정 파일은 환경 변수로 지정할 수 있습니다.
 
 ```bash
 PLAY_REVIEW_PING_CONFIG=/path/to/team.config.json pnpm watch
 ```
 
-상태 파일을 유지할 수 있는 VM, NAS 또는 작은 서버에서 장기 프로세스로 실행하는 것이 현재 MVP에 가장 단순합니다.
+상태 파일을 유지할 수 있는 가상 머신(VM), 네트워크 결합 스토리지(NAS) 또는 작은 서버에서 실행하면 현재 MVP를 변경하지 않아도 됩니다.
+
+처음에는 개발 랩탑에서 `pnpm watch`를 실행해 실제 앱 연동을 검증합니다. 이 프로세스가 Google Play API를 주기적으로 조회하는 폴링 워커입니다. 랩탑이 잠들거나 프로세스가 종료되면 폴링도 멈춥니다.
+
+검증 후 홈서버나 클라우드 VM으로 옮기는 방법은 [`docs/OPERATIONS.md`](docs/OPERATIONS.md)를 참고하세요.
 
 ## 검증
 
@@ -120,7 +128,7 @@ pnpm check
 - 상태 저장은 로컬 JSON 파일입니다. Cloud Run처럼 파일이 영속적이지 않은 환경에는 아직 바로 배포할 수 없습니다.
 - 웹훅 채널별 재시도와 이메일은 다음 버전 범위입니다.
 
-구체적인 범위는 [`docs/MVP.md`](docs/MVP.md), 구조와 결정은 [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)에서 확인할 수 있습니다.
+구체적인 범위는 [`docs/MVP.md`](docs/MVP.md), 구조와 결정은 [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), 운영 방법은 [`docs/OPERATIONS.md`](docs/OPERATIONS.md), API 할당량과 복구 절차는 [`docs/QUOTAS.md`](docs/QUOTAS.md)에서 확인할 수 있습니다.
 
 ## License
 
