@@ -1,0 +1,10 @@
+{
+  "pollIntervalSeconds": 180,
+  "stateFile": ".data/state.json",
+  "apps": [
+    {
+      "packageName": "com.example.app",
+      "tracks": ["production"]
+    }
+  ]
+}

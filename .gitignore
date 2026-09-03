@@ -1,0 +1,7 @@
+node_modules/
+.env
+.data/
+dist/
+coverage/
+watch.config.json
+*.log

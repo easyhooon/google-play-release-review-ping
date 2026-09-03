@@ -1,0 +1,27 @@
+{
+  "name": "play-review-ping",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Google Play 심사 상태 전환을 감지해 팀 채널로 알리는 폴러",
+  "type": "module",
+  "packageManager": "pnpm@10.13.1",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "check": "pnpm typecheck && pnpm test",
+    "demo": "node --import tsx src/cli.ts demo",
+    "once": "node --env-file-if-exists=.env --import tsx src/cli.ts once",
+    "watch": "node --env-file-if-exists=.env --import tsx src/cli.ts watch",
+    "test": "node --import tsx --test test/*.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "google-auth-library": "^10.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.0",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2"
+  }
+}
