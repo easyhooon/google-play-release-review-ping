@@ -54,7 +54,7 @@ Managed publishing을 사용하지 않으면 폴링 사이에 `APPROVED_NOT_PUBL
 
 ## 프로토타입에서 채택한 결정
 
-상태 모델은 [`prototype/state-machine`](https://github.com/easyhooon/play-review-ping/tree/prototype/state-machine) 브랜치에서 터미널로 검증했다. 검증 질문과 결과는 [GitHub Issue #1](https://github.com/easyhooon/play-review-ping/issues/1)에 남겼다.
+상태 모델은 [`prototype/state-machine`](https://github.com/easyhooon/google-play-release-review-ping/tree/prototype/state-machine) 브랜치에서 터미널로 검증했다. 검증 질문과 결과는 [GitHub Issue #1](https://github.com/easyhooon/google-play-release-review-ping/issues/1)에 남겼다.
 
 - 첫 관측은 기준점으로만 저장한다.
 - 같은 상태 반복 관측은 알림을 만들지 않는다.

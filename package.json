@@ -1,5 +1,5 @@
 {
-  "name": "play-review-ping",
+  "name": "google-play-release-review-ping",
   "version": "0.1.0",
   "private": true,
   "description": "Google Play 심사 상태 전환을 감지해 팀 채널로 알리는 폴러",

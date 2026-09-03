@@ -107,7 +107,7 @@ export async function notifyAll(
 export function formatMessage(event: NotificationEvent): string {
   const release = event.release;
   const lines = [
-    `[Play Review Ping] ${titles[event.kind]}`,
+    `[Google Play Release Review Ping] ${titles[event.kind]}`,
     `${release.packageName} · ${release.track}`,
     `버전 ${release.releaseName} (${release.versionCode})`,
   ];
