@@ -13,11 +13,20 @@ observeLifecycle(previous, current)
        |
        +---- 변화 없음 / 첫 관측 ----> 상태만 저장
        |
-       +---- 알림 대상 전환 ----------> Slack / Discord / Console
+       +---- 알림 대상 전환 ----------> 앱별 채널 선택
+                                         |
+                                         v
+                              Slack / Discord / Teams / Console
                                          |
                                          v
                                   성공 후 상태 저장
 ```
+
+## 앱별 알림 라우팅
+
+각 앱은 `slackWebhookEnv`, `discordWebhookEnv`와 `teamsWebhookEnv`로 알림 채널을 지정할 수 있다. 설정값에는 URL이 아니라 URL이 저장된 환경 변수 이름을 사용한다.
+
+앱별 채널이 하나라도 설정되면 해당 앱은 지정 채널만 사용한다. 앱별 채널이 없으면 전역 웹훅을 사용하며, 전역 웹훅도 없으면 콘솔에 출력한다.
 
 ## 상태 키
 

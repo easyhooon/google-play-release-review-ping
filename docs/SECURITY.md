@@ -9,7 +9,8 @@
 - 서비스 계정 JSON, `.env`, 실제 `watch.config.json`은 Git에 커밋하지 않는다.
 - 로컬에서는 `GOOGLE_APPLICATION_CREDENTIALS`에 저장소 밖 JSON 파일의 절대 경로를 지정한다.
 - 서버에서는 가능하면 Workload Identity나 런타임 서비스 계정을 사용해 장기 JSON 키를 만들지 않는다.
-- Slack과 Discord 웹훅 URL은 비밀번호처럼 취급하고 Secret Manager 또는 실행 환경의 secret에 저장한다.
+- Slack, Discord와 Teams 웹훅 URL은 비밀번호처럼 취급하고 Secret Manager 또는 실행 환경의 secret에 저장한다.
+- `watch.config.json`에는 웹훅 URL 대신 URL이 저장된 환경 변수 이름만 기록한다.
 
 ## 상태 파일
 

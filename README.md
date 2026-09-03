@@ -78,14 +78,45 @@ cp .env.example .env
 
 ## 알림 채널
 
-`.env`에 하나 이상 설정합니다. 둘 다 있으면 두 채널로 전송합니다.
+앱별 설정이 없으면 `.env`의 전역 채널로 전송합니다. 여러 값을 설정하면 지정한 모든 채널로 전송합니다.
 
 ```dotenv
 SLACK_WEBHOOK_URL=https://hooks.slack.com/services/...
 DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...
+TEAMS_WEBHOOK_URL=https://example.webhook.office.com/...
 ```
 
 아무것도 설정하지 않으면 콘솔에 메시지를 출력합니다.
+
+앱별 채널을 분리하려면 `watch.config.json`에 웹훅 URL이 저장된 환경 변수 이름을 지정합니다:
+
+```json
+{
+  "apps": [
+    {
+      "packageName": "com.example.personal",
+      "tracks": ["internal", "production"],
+      "discordWebhookEnv": "DISCORD_WEBHOOK_URL_PERSONAL"
+    },
+    {
+      "packageName": "com.example.company",
+      "tracks": ["production"],
+      "teamsWebhookEnv": "TEAMS_WEBHOOK_URL_COMPANY"
+    }
+  ]
+}
+```
+
+`.env`에는 각 앱의 실제 URL을 저장합니다:
+
+```dotenv
+DISCORD_WEBHOOK_URL_PERSONAL=https://discord.com/api/webhooks/...
+TEAMS_WEBHOOK_URL_COMPANY=https://example.webhook.office.com/...
+```
+
+앱에 `slackWebhookEnv`, `discordWebhookEnv` 또는 `teamsWebhookEnv`가 하나라도 있으면 해당 앱은 지정한 채널만 사용합니다. 지정한 환경 변수가 없으면 워커가 시작 단계에서 오류를 출력합니다.
+
+Teams에는 Adaptive Card 형식으로 전송합니다. Microsoft 365 Connectors는 지원 종료가 예정되어 있으므로 새 Teams 연동에는 [Workflows 웹훅](https://learn.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/add-incoming-webhook#create-webhooks-using-workflows)을 권장합니다. 인증이 필요한 Workflows 트리거는 아직 지원하지 않으므로 URL만으로 요청을 받는 웹훅을 사용합니다.
 
 ## 실행
 
