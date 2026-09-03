@@ -1,5 +1,8 @@
 import type { Config } from "./config.js";
-import { observeLifecycle } from "./domain/lifecycle.js";
+import {
+  observeLifecycle,
+  type LifecycleState,
+} from "./domain/lifecycle.js";
 import type { GooglePlayClient, ReleaseObservation } from "./google-play.js";
 import {
   notifyAll,
@@ -29,12 +32,21 @@ export async function pollOnce(
     )
   ).flat();
 
+  const trackBaselines = new Map<string, boolean>();
+  for (const observation of observations) {
+    const key = trackKey(observation);
+    if (!trackBaselines.has(key)) {
+      trackBaselines.set(key, store.hasTrack(observation));
+    }
+  }
+
   let notifications = 0;
   for (const observation of observations) {
     notifications += await processObservation(
       store,
       observation,
       resolveNotifiers(observation.packageName),
+      trackBaselines.get(trackKey(observation)) ?? false,
     );
   }
 
@@ -46,18 +58,41 @@ async function processObservation(
   store: FileStateStore,
   observation: ReleaseObservation,
   notifiers: Notifier[],
+  trackHasBaseline: boolean,
 ): Promise<number> {
   const previous = store.get(observation)?.state ?? null;
   const decision = observeLifecycle(previous, observation.state);
+  const notification = isNewInternalDeployment(
+    observation,
+    previous,
+    trackHasBaseline,
+  )
+    ? "internal-deployed"
+    : decision.notification;
 
-  if (decision.notification && previous) {
+  if (notification) {
     await notifyAll(notifiers, {
-      kind: decision.notification,
+      kind: notification,
       previous,
       release: observation,
     });
   }
 
   store.set(observation);
-  return decision.notification ? 1 : 0;
+  return notification ? 1 : 0;
+}
+
+function isNewInternalDeployment(
+  observation: ReleaseObservation,
+  previous: LifecycleState | null,
+  trackHasBaseline: boolean,
+): boolean {
+  return previous === null &&
+    trackHasBaseline &&
+    observation.track === "internal" &&
+    observation.state === "RELEASE_LIFECYCLE_STATE_PUBLISHED";
+}
+
+function trackKey(observation: ReleaseObservation): string {
+  return `${observation.packageName}\0${observation.track}`;
 }

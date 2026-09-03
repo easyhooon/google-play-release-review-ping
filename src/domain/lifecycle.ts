@@ -11,6 +11,7 @@ export const lifecycleStates = [
 export type LifecycleState = (typeof lifecycleStates)[number];
 
 export type NotificationKind =
+  | "internal-deployed"
   | "action-required"
   | "approved"
   | "rejected"

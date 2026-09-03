@@ -32,6 +32,15 @@ export class FileStateStore {
     return this.state.observations[observationKey(observation)];
   }
 
+  hasTrack(observation: ReleaseObservation): boolean {
+    const prefix = [observation.packageName, observation.track]
+      .map(encodeURIComponent)
+      .join("|") + "|";
+    return Object.keys(this.state.observations).some((key) =>
+      key.startsWith(prefix)
+    );
+  }
+
   set(observation: ReleaseObservation): void {
     this.state.observations[observationKey(observation)] = {
       state: observation.state,

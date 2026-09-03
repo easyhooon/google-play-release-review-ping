@@ -7,7 +7,7 @@ import type { ReleaseObservation } from "./google-play.js";
 
 export interface NotificationEvent {
   kind: NotificationKind;
-  previous: LifecycleState;
+  previous: LifecycleState | null;
   release: ReleaseObservation;
 }
 
@@ -24,6 +24,7 @@ type WebhookFetch = (
 ) => Promise<{ ok: boolean; status: number }>;
 
 const titles: Record<NotificationKind, string> = {
+  "internal-deployed": "🧪 Internal Testing 새 버전 배포",
   "action-required": "⚠️ 심사 전송 필요",
   approved: "✅ 심사 승인 완료 — 게시 대기",
   rejected: "🚨 심사 거절",
@@ -105,12 +106,15 @@ export async function notifyAll(
 
 export function formatMessage(event: NotificationEvent): string {
   const release = event.release;
-  return [
+  const lines = [
     `[Play Review Ping] ${titles[event.kind]}`,
-    `${release.packageName} · ${release.track} · versionCode ${release.versionCode}`,
-    `${release.releaseName}`,
-    `${shortState(event.previous)} → ${shortState(release.state)}`,
-  ].join("\n");
+    `${release.packageName} · ${release.track}`,
+    `버전 ${release.releaseName} (${release.versionCode})`,
+  ];
+  if (event.previous) {
+    lines.push(`${shortState(event.previous)} → ${shortState(release.state)}`);
+  }
+  return lines.join("\n");
 }
 
 function createAppNotifiers(

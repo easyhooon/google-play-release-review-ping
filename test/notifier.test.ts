@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   createNotifierResolver,
+  formatMessage,
   notifyAll,
   type NotificationEvent,
 } from "../src/notifier.js";
@@ -87,6 +88,23 @@ test("앱별 환경 변수가 없으면 시작할 때 오류를 반환한다", (
     ),
     /TEAMS_COMPANY가 필요합니다/,
   );
+});
+
+test("내부 테스트 배포 메시지에 버전명과 버전코드를 표시한다", () => {
+  const message = formatMessage({
+    kind: "internal-deployed",
+    previous: null,
+    release: {
+      packageName: "com.example.app",
+      track: "internal",
+      releaseName: "1.2.3",
+      versionCode: 123,
+      state: "RELEASE_LIFECYCLE_STATE_PUBLISHED",
+    },
+  });
+
+  assert.match(message, /Internal Testing 새 버전 배포/);
+  assert.match(message, /버전 1\.2\.3 \(123\)/);
 });
 
 function notificationEvent(packageName: string): NotificationEvent {
