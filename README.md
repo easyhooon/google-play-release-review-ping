@@ -4,6 +4,8 @@ Google Play 앱 릴리스의 심사 상태를 감시하고 Slack, Discord 또는
 
 Play Console 화면을 긁지 않고 공식 Google Play Developer API의 `releaseLifecycleState`를 사용합니다.
 
+반다라트 iOS App Store **심사 상태** 감시는 별도로 구현되어 있습니다. 현재 운영 중인 `ios:watch`는 App Store Connect API를 15분마다 조회합니다. Apple 공식 상태 변경 웹훅 수신기(`src/ios-webhook-worker.ts`)도 구현했으며, 공개 HTTPS 배포·비밀 설정·실제 전달 검증이 끝나면 조회를 중단할 예정입니다. iOS **고객 후기** 알림과는 다른 흐름입니다. [iOS 운영 및 웹훅 전환 절차](docs/IOS_STORE_OPERATIONS.md)를 참고하세요.
+
 ```text
 Google Play API ──> 상태 비교 ──> Slack / Discord
                          └──────> .data/state.json
@@ -157,7 +159,7 @@ pnpm check
 ## 현재 한계
 
 - 트랙의 AAB/APK 릴리스 상태만 감시합니다. 스토어 등록정보만 바꾼 제출 전체의 상태는 공개 API로 완전히 조회할 수 없습니다.
-- Google은 릴리스 심사 웹훅을 제공하지 않으므로 폴링합니다.
+- 공개 공식 문서에서 Google Play 릴리스 심사 상태 웹훅을 확인할 수 없어 API를 조회합니다. [릴리스 상태 API](https://developers.google.com/android-publisher/api-ref/rest/v3/applications.tracks.releases/list)와 [구매·구독용 RTDN](https://developer.android.com/google/play/billing/rtdn-reference)은 별개입니다.
 - 상태 저장은 로컬 JSON 파일입니다. Cloud Run처럼 파일이 영속적이지 않은 환경에는 아직 바로 배포할 수 없습니다.
 - 웹훅 채널별 재시도와 이메일은 다음 버전 범위입니다.
 
