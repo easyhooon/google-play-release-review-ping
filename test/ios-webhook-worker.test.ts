@@ -69,7 +69,7 @@ function fixture() {
   function request(event: unknown = payload, secret = env.APPLE_WEBHOOK_SECRET): Request {
     const body = JSON.stringify(event);
     const signature = createHmac("sha256", secret).update(body).digest("hex");
-    return new Request("https://worker.example/webhook", {
+    return new Request("https://worker.example/apple/app-store-version", {
       method: "POST", body, headers: { "x-apple-signature": `hmacsha256=${signature}` },
     });
   }

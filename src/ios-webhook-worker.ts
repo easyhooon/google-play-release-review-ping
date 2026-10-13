@@ -1,4 +1,4 @@
-import { formatIosStoreMessage } from "./ios-store.js";
+import { formatIosStoreMessage } from "./ios-store-message.js";
 
 interface Statement {
   bind(...values: unknown[]): Statement;
@@ -36,6 +36,9 @@ const maxBodyBytes = 64 * 1024;
 export async function handleAppleWebhook(
   request: Request, env: WebhookEnv, fetcher: typeof fetch = fetch,
 ): Promise<Response> {
+  if (new URL(request.url).pathname !== "/apple/app-store-version") {
+    return new Response("Not found", { status: 404 });
+  }
   if (request.method !== "POST") return new Response("Method not allowed", { status: 405 });
   if (!env.APPLE_WEBHOOK_SECRET || !env.DISCORD_WEBHOOK_URL ||
       !env.APP_STORE_CONNECT_KEY_ID || !env.APP_STORE_CONNECT_ISSUER_ID ||
