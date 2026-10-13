@@ -182,4 +182,8 @@ async function appleToken(env: WebhookEnv): Promise<string> {
   return `${unsigned}.${encoded}`;
 }
 
-export default { fetch: handleAppleWebhook };
+export default {
+  fetch(request: Request, env: WebhookEnv): Promise<Response> {
+    return handleAppleWebhook(request, env);
+  },
+};
