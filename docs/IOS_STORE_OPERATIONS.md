@@ -18,6 +18,16 @@ Apple API: [버전 목록](https://developer.apple.com/documentation/appstorecon
 
 App Store Connect는 앱 상태 변경 이벤트 `APP_STORE_VERSION_APP_VERSION_STATE_UPDATED`를 지원합니다. 이벤트에는 `oldValue`, `newValue`, `timestamp`와 App Store 버전 ID가 포함됩니다. [Apple 웹훅 이벤트 문서](https://developer.apple.com/documentation/appstoreconnectapi/webhook-events)를 참고하세요.
 
+### 회사 Mac 수신기
+
+`src/ios-webhook-local.ts`는 `127.0.0.1`에만 바인딩하는 HTTP 수신기입니다. `pnpm ios:webhook`으로 실행할 수 있습니다. 이 로컬 주소는 Apple에서 직접 접근할 수 없으므로, Apple 웹훅 등록 전 **공개 HTTPS 주소에서 `/apple/app-store-version`만 로컬 포트로 전달하는 프록시 또는 터널**이 필요합니다. 기존 Mac에서 해당 공개 경로는 확인되지 않았습니다. 터널·방화벽·포트 공개는 네트워크 보안 변경이므로 별도 승인 후 설정합니다.
+
+운영 환경 변수는 기존 폴러의 `IOS_STORE_REVIEW_PING_CONFIG`, `APP_STORE_CONNECT_KEY_ID`, `APP_STORE_CONNECT_ISSUER_ID`, `APP_STORE_CONNECT_KEY_PATH`, 설정 파일에서 지정한 Discord 웹훅 변수에 더해 `APPLE_WEBHOOK_SECRET`이 필요합니다. 이 새 공유 비밀값은 Apple 웹훅 등록에도 동일하게 입력합니다. `IOS_STORE_WEBHOOK_PORT`의 기본값은 `8787`, `IOS_STORE_WEBHOOK_DB`의 기본값은 `.data/ios-webhook-events.sqlite`입니다. 값은 저장소나 명령줄 인수에 넣지 마세요.
+
+수신기는 원문 HMAC-SHA256 서명을 검증하고 Apple API에서 버전 ID가 앱 `6743101965`에 속하는지 확인합니다. SQLite는 이벤트 ID와 처리 상태를 영속 기록합니다. 동시 처리에는 2분 임대를 사용하고 Discord 실패 시 임대를 해제해 재처리합니다. Apple ping은 Discord에 보내지 않습니다. 실제 Apple 수신·Discord 전달 확인 전까지 `ios:watch`를 유지합니다. Discord 성공 직후 SQLite 기록이 실패하면 재전달 시 중복이 생길 수 있으므로 Apple 전달 기록과 로컬 로그를 대조합니다.
+
+### 추후 Cloudflare 이전
+
 `src/ios-webhook-worker.ts`는 Cloudflare Worker용 수신기입니다. 원문 본문의 HMAC-SHA256 서명을 검사하고, Apple API에서 앱 `6743101965`에 속한 iOS 버전 ID와 버전 문자열을 확인합니다. D1의 `webhook_events.id` 고유 키와 2분 처리 임대로 중복·동시 수신을 억제합니다. Discord 전송에는 `wait=true`를 사용하며, 전송 실패에는 HTTP 503을 반환하고 처리 임대를 해제합니다. Apple ping 등 다른 이벤트는 Discord로 전달하지 않습니다.
 
 배포 준비 시 `wrangler.example.jsonc`를 `wrangler.jsonc`로 복사하고 새 D1 데이터베이스 ID를 넣은 뒤 `migrations/0001_webhook_events.sql`을 적용합니다. Worker에는 다음 **비밀 환경 변수**가 필요합니다. 값은 저장소에 넣지 말고 운영자가 배포 서비스에 직접 입력해야 합니다.
