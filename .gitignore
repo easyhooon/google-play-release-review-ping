@@ -4,4 +4,5 @@ node_modules/
 dist/
 coverage/
 watch.config.json
+ios-store.config.json
 *.log

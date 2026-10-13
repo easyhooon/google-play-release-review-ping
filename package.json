@@ -13,6 +13,8 @@
     "demo": "node --import tsx src/cli.ts demo",
     "once": "node --env-file-if-exists=.env --import tsx src/cli.ts once",
     "watch": "node --env-file-if-exists=.env --import tsx src/cli.ts watch",
+    "ios:once": "node --import tsx src/ios-store-cli.ts once",
+    "ios:watch": "node --import tsx src/ios-store-cli.ts watch",
     "test": "node --import tsx --test test/*.test.ts",
     "typecheck": "tsc --noEmit"
   },

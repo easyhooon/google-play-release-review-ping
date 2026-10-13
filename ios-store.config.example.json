@@ -1,0 +1,7 @@
+{
+  "appStoreId": "6743101965",
+  "appName": "반다라트",
+  "pollIntervalSeconds": 900,
+  "stateFile": ".data/ios-store-state.json",
+  "discordWebhookEnv": "BANDALART_PLAY_WEBHOOK_URL"
+}
