@@ -12,9 +12,13 @@ interface Database {
 
 export interface WebhookEnv {
   EVENTS: Database;
+  APP_STORE_ID: string;
+  APP_NAME: string;
   APPLE_WEBHOOK_SECRET: string;
+  /** "team"(기본값) 또는 "individual". 개인 키는 Issuer ID 없이 서명한다. */
+  APP_STORE_CONNECT_KEY_TYPE?: string;
   APP_STORE_CONNECT_KEY_ID: string;
-  APP_STORE_CONNECT_ISSUER_ID: string;
+  APP_STORE_CONNECT_ISSUER_ID?: string;
   APP_STORE_CONNECT_PRIVATE_KEY: string;
   DISCORD_WEBHOOK_URL: string;
 }
@@ -28,8 +32,6 @@ interface AppleEvent {
   };
 }
 
-const appId = "6743101965";
-const appName = "반다라트";
 const eventType = "appStoreVersionAppVersionStateUpdated";
 const maxBodyBytes = 64 * 1024;
 
@@ -40,9 +42,9 @@ export async function handleAppleWebhook(
     return new Response("Not found", { status: 404 });
   }
   if (request.method !== "POST") return new Response("Method not allowed", { status: 405 });
-  if (!env.APPLE_WEBHOOK_SECRET || !env.DISCORD_WEBHOOK_URL ||
-      !env.APP_STORE_CONNECT_KEY_ID || !env.APP_STORE_CONNECT_ISSUER_ID ||
-      !env.APP_STORE_CONNECT_PRIVATE_KEY || !env.EVENTS) {
+  if (!/^\d{1,20}$/.test(env.APP_STORE_ID ?? "") || !env.APP_NAME?.trim() ||
+      !env.APPLE_WEBHOOK_SECRET || !env.DISCORD_WEBHOOK_URL || !validKeyConfig(env) ||
+      !env.APP_STORE_CONNECT_KEY_ID || !env.APP_STORE_CONNECT_PRIVATE_KEY || !env.EVENTS) {
     return new Response("Service unavailable", { status: 503 });
   }
   let body: ArrayBuffer;
@@ -96,7 +98,7 @@ export async function handleAppleWebhook(
         status: existing?.status === "delivered" ? 200 : 503,
       });
     }
-    const message = formatIosStoreMessage(appName, {
+    const message = formatIosStoreMessage(env.APP_NAME, {
       id: versionId, version, state: newValue,
     }, oldValue);
     let discord: Response;
@@ -141,9 +143,15 @@ async function validSignature(body: ArrayBuffer, header: string | null, secret: 
   return difference === 0;
 }
 
+function validKeyConfig(env: WebhookEnv): boolean {
+  const type = env.APP_STORE_CONNECT_KEY_TYPE ?? "team";
+  if (type === "individual") return true;
+  return type === "team" && !!env.APP_STORE_CONNECT_ISSUER_ID;
+}
+
 async function resolveVersion(versionId: string, env: WebhookEnv, fetcher: typeof fetch): Promise<string | null> {
   const token = await appleToken(env);
-  const url = new URL(`https://api.appstoreconnect.apple.com/v1/apps/${appId}/appStoreVersions`);
+  const url = new URL(`https://api.appstoreconnect.apple.com/v1/apps/${env.APP_STORE_ID}/appStoreVersions`);
   url.searchParams.set("filter[platform]", "IOS");
   url.searchParams.set("fields[appStoreVersions]", "platform,versionString");
   url.searchParams.set("limit", "200");
@@ -171,8 +179,11 @@ async function appleToken(env: WebhookEnv): Promise<string> {
   const encode = (value: unknown) => btoa(JSON.stringify(value))
     .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
   const issued = Math.floor(Date.now() / 1000);
+  // 팀 키는 iss(Issuer ID), 개인 키는 sub: "user"로 서명한다.
+  const subject = env.APP_STORE_CONNECT_KEY_TYPE === "individual"
+    ? { sub: "user" } : { iss: env.APP_STORE_CONNECT_ISSUER_ID };
   const unsigned = `${encode({ alg: "ES256", kid: env.APP_STORE_CONNECT_KEY_ID, typ: "JWT" })}.${encode({
-    iss: env.APP_STORE_CONNECT_ISSUER_ID, iat: issued, exp: issued + 1200, aud: "appstoreconnect-v1",
+    ...subject, iat: issued, exp: issued + 1200, aud: "appstoreconnect-v1",
   })}`;
   const pem = env.APP_STORE_CONNECT_PRIVATE_KEY.replace(/-----BEGIN PRIVATE KEY-----|-----END PRIVATE KEY-----|\s/g, "");
   const bytes = Uint8Array.from(atob(pem), (c) => c.charCodeAt(0));
