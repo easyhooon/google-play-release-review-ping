@@ -48,7 +48,7 @@ flowchart LR
 | 앱 | 설정 예시 | App Store 앱 ID | 키 종류 |
 | --- | --- | --- | --- |
 | 반다라트 | `wrangler.example.jsonc` | `6743101965` | 팀 키 |
-| 여비 | `wrangler.yeobee.example.jsonc` | `6475346701` | 개인 키 |
+| 여비 | `wrangler.yeobee.jsonc` (운영 설정) | `6475346701` | 개인 키 |
 
 - `vars`: `APP_STORE_ID`(숫자만), `APP_NAME`, `APP_STORE_CONNECT_KEY_TYPE`(`team` 기본값 또는 `individual`). 값이 없거나 올바르지 않으면 Worker는 외부 요청 없이 503을 반환한다.
 - 비밀값: `APPLE_WEBHOOK_SECRET`, `APP_STORE_CONNECT_KEY_ID`, `APP_STORE_CONNECT_PRIVATE_KEY`, `DISCORD_WEBHOOK_URL`. 팀 키일 때만 `APP_STORE_CONNECT_ISSUER_ID`가 필요하다.
@@ -59,6 +59,17 @@ flowchart LR
 Worker는 `x-apple-signature`의 HMAC-SHA256 값을 **요청 원문 바이트**로 계산한 값과 상수 시간 비교로 대조한다. 서명이 틀리거나 필수 설정이 없으면 Apple API나 Discord에 요청하지 않는다. 서명이 맞아도 `APP_STORE_VERSION_APP_VERSION_STATE_UPDATED` 이벤트만 처리하고, Apple API에서 버전 ID가 반다라트 앱 `6743101965`에 속하는지 다시 확인한다.
 
 D1의 `webhook_events.id` 고유 키를 Apple 이벤트 ID로 사용한다. 같은 ID는 한 번만 처리하도록 시도하며, 동시 요청은 2분 처리 임대로 조정한다. Discord 성공 응답 뒤 D1 완료 기록이 실패하는 드문 경우에는 재전달로 중복 메시지가 생길 수 있다. 운영자는 Apple 전달 기록과 D1을 함께 확인해야 한다.
+
+## Apple 웹훅 공유 비밀값 재발급
+
+공유 비밀값은 Cloudflare 비밀값과 App Store Connect 웹훅 설정에만 저장하며, 두 곳 모두 저장 후에는 다시 볼 수 없다. 저장소·문서·채팅에 기록하지 않는다. 값을 잃어버리거나 노출이 의심되면 복구하지 말고 새로 만든다.
+
+1. 새 값을 만들어 Worker에 넣고 같은 값을 클립보드에 복사한다. 값이 화면이나 셸 기록에 남지 않는다.
+   ```bash
+   S=$(openssl rand -hex 32); printf %s "$S" | pbcopy; printf %s "$S" | npx wrangler secret put APPLE_WEBHOOK_SECRET --name <worker-name>; unset S
+   ```
+2. App Store Connect → 사용자 및 액세스 → 통합 → 웹훅에서 해당 웹훅을 열고 암호 칸에 붙여넣은 뒤 저장한다.
+3. 같은 화면의 **테스트**로 Ping을 보내고 최근 전달 내역이 **성공**인지 확인한다. 1과 2 사이에 도착한 이벤트는 401로 실패하므로 전달 내역에서 재전송한다.
 
 ## 실패, 테스트, 전환과 롤백
 
