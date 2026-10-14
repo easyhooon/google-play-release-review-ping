@@ -41,6 +41,19 @@ flowchart LR
 6. 운영자가 동일한 공유 비밀값으로 앱 `6743101965`의 `APP_STORE_VERSION_APP_VERSION_STATE_UPDATED` 웹훅을 Apple에 등록한다.
 7. Apple ping 및 전달 기록으로 수신과 서명을 확인한다. Ping은 Discord에 보내지 않는다. 실제 상태 전환과 Discord 전달을 확인한 뒤에만 15분 조회 중단을 검토한다.
 
+## 앱별 Worker 구성
+
+같은 `src/ios-webhook-worker.ts`를 앱마다 별도 Worker로 배포한다. Worker 이름, D1, 비밀값, Discord 채널은 앱끼리 공유하지 않는다.
+
+| 앱 | 설정 예시 | App Store 앱 ID | 키 종류 |
+| --- | --- | --- | --- |
+| 반다라트 | `wrangler.example.jsonc` | `6743101965` | 팀 키 |
+| 여비 | `wrangler.yeobee.example.jsonc` | `6475346701` | 개인 키 |
+
+- `vars`: `APP_STORE_ID`(숫자만), `APP_NAME`, `APP_STORE_CONNECT_KEY_TYPE`(`team` 기본값 또는 `individual`). 값이 없거나 올바르지 않으면 Worker는 외부 요청 없이 503을 반환한다.
+- 비밀값: `APPLE_WEBHOOK_SECRET`, `APP_STORE_CONNECT_KEY_ID`, `APP_STORE_CONNECT_PRIVATE_KEY`, `DISCORD_WEBHOOK_URL`. 팀 키일 때만 `APP_STORE_CONNECT_ISSUER_ID`가 필요하다.
+- 배포: `wrangler deploy -c wrangler.yeobee.jsonc`처럼 앱별 설정 파일을 지정한다.
+
 ## 요청 검증과 중복 방지
 
 Worker는 `x-apple-signature`의 HMAC-SHA256 값을 **요청 원문 바이트**로 계산한 값과 상수 시간 비교로 대조한다. 서명이 틀리거나 필수 설정이 없으면 Apple API나 Discord에 요청하지 않는다. 서명이 맞아도 `APP_STORE_VERSION_APP_VERSION_STATE_UPDATED` 이벤트만 처리하고, Apple API에서 버전 ID가 반다라트 앱 `6743101965`에 속하는지 다시 확인한다.

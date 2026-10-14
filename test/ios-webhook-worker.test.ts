@@ -16,10 +16,12 @@ const payload = {
   },
 };
 
-function fixture() {
+function fixture(overrides: Partial<WebhookEnv> = {}) {
   const rows = new Map<string, { status: string; lease: number; token: string }>();
   const { privateKey, publicKey } = generateKeyPairSync("ec", { namedCurve: "P-256" });
   const env: WebhookEnv = {
+    APP_STORE_ID: "6743101965",
+    APP_NAME: "반다라트",
     APPLE_WEBHOOK_SECRET: "test-shared-secret",
     APP_STORE_CONNECT_KEY_ID: "TESTKEY123",
     APP_STORE_CONNECT_ISSUER_ID: "00000000-0000-0000-0000-000000000000",
@@ -65,6 +67,7 @@ function fixture() {
         };
       },
     },
+    ...overrides,
   };
   function request(event: unknown = payload, secret = env.APPLE_WEBHOOK_SECRET): Request {
     const body = JSON.stringify(event);
@@ -83,8 +86,14 @@ function fixture() {
       assert.match(authorization, /^Bearer [A-Za-z0-9_.-]+$/);
       const [header, claims, signature] = authorization.slice(7).split(".");
       assert.equal(JSON.parse(Buffer.from(header!, "base64url").toString()).alg, "ES256");
-      assert.equal(JSON.parse(Buffer.from(claims!, "base64url").toString()).iss,
-        env.APP_STORE_CONNECT_ISSUER_ID);
+      assert.equal(url.pathname, `/v1/apps/${env.APP_STORE_ID}/appStoreVersions`);
+      const decoded = JSON.parse(Buffer.from(claims!, "base64url").toString());
+      if (env.APP_STORE_CONNECT_KEY_TYPE === "individual") {
+        assert.equal(decoded.sub, "user");
+        assert.equal(decoded.iss, undefined);
+      } else {
+        assert.equal(decoded.iss, env.APP_STORE_CONNECT_ISSUER_ID);
+      }
       assert.ok(verify("sha256", Buffer.from(`${header}.${claims}`),
         { key: publicKey, dsaEncoding: "ieee-p1363" }, Buffer.from(signature!, "base64url")));
       return Response.json({ data: [{ id: appVersionId,
@@ -93,7 +102,7 @@ function fixture() {
     assert.equal(url.hostname, "discord.com");
     assert.equal(url.searchParams.get("wait"), "true");
     const message = JSON.parse(String(init?.body)) as { content: string; allowed_mentions: unknown };
-    assert.match(message.content, /반다라트 iOS 심사 상태 변경/);
+    assert.ok(message.content.includes(`${env.APP_NAME} iOS 심사 상태 변경`));
     assert.match(message.content, /버전 1\.5\.0/);
     assert.deepEqual(message.allowed_mentions, { parse: [] });
     discordCount++;
@@ -135,4 +144,27 @@ test("잘못된 이벤트 본문과 다른 이벤트 종류를 구분한다", as
   assert.equal((await handleAppleWebhook(f.request({ data: { type: payload.data.type } }), f.env, f.fetcher)).status, 400);
   assert.equal((await handleAppleWebhook(f.request({ data: { type: "webhookPings" } }), f.env, f.fetcher)).status, 204);
   assert.equal(f.discordCount, 0);
+});
+
+test("앱 ID·이름과 개인 키 설정으로 다른 앱 Worker를 구성한다", async () => {
+  const f = fixture({
+    APP_STORE_ID: "6475346701", APP_NAME: "여비",
+    APP_STORE_CONNECT_KEY_TYPE: "individual", APP_STORE_CONNECT_ISSUER_ID: undefined,
+  });
+  assert.equal((await handleAppleWebhook(f.request(), f.env, f.fetcher)).status, 200);
+  assert.equal(f.discordCount, 1);
+});
+
+test("앱 ID·이름·키 설정이 올바르지 않으면 외부 요청 없이 503을 반환한다", async () => {
+  for (const overrides of [
+    { APP_STORE_ID: "" }, { APP_STORE_ID: "123/../456" }, { APP_NAME: " " },
+    { APP_STORE_CONNECT_ISSUER_ID: undefined },
+    { APP_STORE_CONNECT_KEY_TYPE: "unknown" },
+  ] satisfies Partial<WebhookEnv>[]) {
+    const f = fixture(overrides);
+    let calls = 0;
+    const counting = async () => { calls++; return new Response(null); };
+    assert.equal((await handleAppleWebhook(f.request(), f.env, counting)).status, 503);
+    assert.equal(calls, 0);
+  }
 });

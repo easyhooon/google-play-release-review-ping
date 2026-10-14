@@ -1,0 +1,13 @@
+{
+  "name": "yeobee-ios-store-webhook",
+  "main": "src/ios-webhook-worker.ts",
+  "compatibility_date": "2026-10-13",
+  "vars": {
+    "APP_STORE_ID": "6475346701",
+    "APP_NAME": "여비",
+    "APP_STORE_CONNECT_KEY_TYPE": "individual"
+  },
+  "d1_databases": [
+    { "binding": "EVENTS", "database_name": "yeobee-ios-webhook-events", "database_id": "REPLACE_WITH_D1_DATABASE_ID" }
+  ]
+}
