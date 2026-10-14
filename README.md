@@ -1,6 +1,6 @@
-# Google Play Release Review Ping
+# Store Release Review Ping
 
-Google Play 앱 릴리스의 심사 상태를 감시하고 Slack, Discord 또는 Teams로 알려주는 작은 알리미입니다.
+Google Play와 App Store 앱 릴리스의 심사 상태를 감시하고 Slack, Discord 또는 Teams로 알려주는 작은 알리미입니다.
 
 Play Console 화면을 긁지 않고 공식 Google Play Developer API의 `releaseLifecycleState`를 사용합니다.
 
