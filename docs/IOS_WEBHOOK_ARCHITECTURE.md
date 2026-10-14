@@ -47,7 +47,7 @@ flowchart LR
 
 | 앱 | 설정 예시 | App Store 앱 ID | 키 종류 |
 | --- | --- | --- | --- |
-| 반다라트 | `wrangler.example.jsonc` | `6743101965` | 팀 키 |
+| 반다라트 | `wrangler.bandalart.jsonc` (운영 설정) | `6743101965` | 팀 키 |
 | 여비 | `wrangler.yeobee.jsonc` (운영 설정) | `6475346701` | 개인 키 |
 
 - `vars`: `APP_STORE_ID`(숫자만), `APP_NAME`, `APP_STORE_CONNECT_KEY_TYPE`(`team` 기본값 또는 `individual`). 값이 없거나 올바르지 않으면 Worker는 외부 요청 없이 503을 반환한다.

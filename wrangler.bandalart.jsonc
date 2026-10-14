@@ -1,0 +1,13 @@
+{
+  "name": "bandalart-ios-store-webhook",
+  "main": "src/ios-webhook-worker.ts",
+  "compatibility_date": "2026-10-13",
+  "vars": {
+    "APP_STORE_ID": "6743101965",
+    "APP_NAME": "반다라트",
+    "APP_STORE_CONNECT_KEY_TYPE": "team"
+  },
+  "d1_databases": [
+    { "binding": "EVENTS", "database_name": "bandalart-ios-webhook-events", "database_id": "4415c672-cf8c-4aff-9792-4952a45624c8" }
+  ]
+}
